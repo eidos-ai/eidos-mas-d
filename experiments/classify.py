@@ -6,11 +6,22 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 import torch.nn.functional as F
+from collections import Counter
+
+from functools import partial
 
 # from torchtext import data, datasets, vocab
-from torchtext.legacy import data, datasets, vocab
+# from torchtext import data, datasets, vocab
+from torchtext.datasets import IMDB
+from torchtext import data
+from torch.utils.data import DataLoader
+from torchtext.vocab import vocab
+from torch.nn.utils.rnn import pad_sequence
+from torchtext.data.utils import get_tokenizer
+tokenizer = get_tokenizer('basic_english')
 
 import numpy as np
+import random
 
 from argparse import ArgumentParser
 from torch.utils.tensorboard import SummaryWriter
@@ -19,38 +30,73 @@ import random, tqdm, sys, math, gzip
 
 # Used for converting between nats and bits
 LOG2E = math.log2(math.e)
-TEXT = data.Field(lower=True, include_lengths=True, batch_first=True)
-LABEL = data.Field(sequential=False)
 NUM_CLS = 2
+
+
+def batch_sampler(batch_size, tokenizer, dataset_list):
+    indices = [(i, len(tokenizer(s[1]))) for i, s in enumerate(dataset_list)]
+    random.shuffle(indices)
+    pooled_indices = []
+    # create pool of indices with similar lengths 
+    for i in range(0, len(indices), batch_size * 100):
+        pooled_indices.extend(sorted(indices[i:i + batch_size * 100], key=lambda x: x[1]))
+
+    pooled_indices = [x[0] for x in pooled_indices]
+
+    # yield indices for current batch
+    for i in range(0, len(pooled_indices), batch_size):
+        yield pooled_indices[i:i + batch_size]
+
+def collate_batch(label_transform, text_transform, batch):
+    label_list, text_list = [], []
+    for (_label, _text) in batch:
+        label_list.append(label_transform(_label))
+        processed_text = torch.tensor(text_transform(_text))
+        text_list.append(processed_text)
+    padded = pad_sequence(text_list, padding_value=3.0)
+    padded = padded.transpose_(0,1)
+    return torch.tensor(label_list), padded 
 
 def go(arg):
     """
     Creates and trains a basic transformer for the IMDB sentiment classification task.
     """
+    device = "cuda"
     tbw = SummaryWriter(log_dir=arg.tb_dir) # Tensorboard logging
 
     # load the IMDB data
     if arg.final:
-        train, test = datasets.IMDB.splits(TEXT, LABEL)
-
-        TEXT.build_vocab(train, max_size=arg.vocab_size - 2)
-        LABEL.build_vocab(train)
-
-        train_iter, test_iter = data.BucketIterator.splits((train, test), batch_size=arg.batch_size, device=util.d())
+        train, test = IMDB(split=('train', 'test'))
+        
     else:
-        tdata, _ = datasets.IMDB.splits(TEXT, LABEL)
-        train, test = tdata.split(split_ratio=0.8)
+        tdata, _ = IMDB(split=('train', 'test'))
+        tdata = list(tdata)
+        random.shuffle(tdata)
+        train, test = tdata[:int(len(tdata)*0.8)], tdata[int(len(tdata)*0.8):]
+    
+    train_list = list(train)
+    test_list = list(test)
+    
+    
+    counter = Counter()
+    for (label, line) in train:
+        counter.update(tokenizer(line))
+    train_vocab = vocab(counter, min_freq=10, specials=('<unk>', '<BOS>', '<EOS>', '<PAD>'))
+    train_vocab.set_default_index(train_vocab['<unk>'])
+    
+    label_transform = lambda x: 1 if x == 'pos' else 0
+    text_transform = lambda x: [train_vocab['<BOS>']] + [train_vocab[token] for token in tokenizer(x)] + [train_vocab['<EOS>']]
 
-        TEXT.build_vocab(train, max_size=arg.vocab_size - 2) # - 2 to make space for <unk> and <pad>
-        LABEL.build_vocab(train)
-
-        train_iter, test_iter = data.BucketIterator.splits((train, test), batch_size=arg.batch_size, device=util.d())
-
-    print(f'- nr. of training examples {len(train_iter)}')
-    print(f'- nr. of {"test" if arg.final else "validation"} examples {len(test_iter)}')
+    
+    test_dataloader = DataLoader(list(test),
+                                  collate_fn=partial(collate_batch, label_transform, text_transform),  
+                                  batch_sampler=batch_sampler(arg.batch_size, tokenizer,test_list))
+    
+    print(f'- nr. of training examples {len(train_list)}')
+    print(f'- nr. of {"test" if arg.final else "validation"} examples {len(test_list)}')
 
     if arg.max_length < 0:
-        mx = max([input.text[0].size(1) for input in train_iter])
+        mx = max([len(input[1]) for input in train])
         mx = mx * 2
         print(f'- maximum sequence length: {mx}')
     else:
@@ -67,17 +113,26 @@ def go(arg):
     # training loop
     seen = 0
     for e in range(arg.num_epochs):
-
+        # Dataloaders have to be created inside epoch loop so that generator starts back again from zero
+        train_dataloader = DataLoader(list(train),
+                                      collate_fn=partial(collate_batch, label_transform, text_transform),  
+                                      batch_sampler=batch_sampler(arg.batch_size, tokenizer,train_list))
+        test_dataloader = DataLoader(list(test),
+                                      collate_fn=partial(collate_batch, label_transform, text_transform),  
+                                      batch_sampler=batch_sampler(arg.batch_size, tokenizer,test_list))
+    
         print(f'\n epoch {e}')
+        print("Train Step")
         model.train(True)
-
-        for batch in tqdm.tqdm(train_iter):
-
+        pbar_train = tqdm.tqdm(total = len(train_list) / arg.batch_size)
+        for i, (label, input) in enumerate(train_dataloader):
             opt.zero_grad()
-
-            input = batch.text[0]
-            label = batch.label - 1
-
+            label = label.to(device)
+            input = input.to(device)
+        
+            # print("label",type(label), label.shape) 
+            # print("input", type(input), input.shape)
+            
             if input.size(1) > mx:
                 input = input[:, :mx]
             out = model(input)
@@ -95,28 +150,34 @@ def go(arg):
 
             seen += input.size(0)
             tbw.add_scalar('classification/train-loss', float(loss.item()), seen)
-
+            
+            # pbar.update(arg.batch_size)
+            # print("loss", loss)
+            pbar_train.update(1)
+        pbar_train.close()
+        
+        print("Evaluation Step")
+        pbar_eval = tqdm.tqdm(total = len(test_list) / arg.batch_size)
         with torch.no_grad():
 
             model.train(False)
             tot, cor= 0.0, 0.0
-
-            for batch in test_iter:
-
-                input = batch.text[0]
-                label = batch.label - 1
-
+            for i, (label, input) in enumerate(test_dataloader):
+                label = label.to(device)
+                input = input.to(device)
+        
+        
                 if input.size(1) > mx:
                     input = input[:, :mx]
                 out = model(input).argmax(dim=1)
-
+                
                 tot += float(input.size(0))
                 cor += float((label == out).sum().item())
-
+                pbar_eval.update(1)
             acc = cor / tot
             print(f'-- {"test" if arg.final else "validation"} accuracy {acc:.3}')
             tbw.add_scalar('classification/test-loss', float(loss.item()), e)
-
+        pbar_eval.close()
 
 if __name__ == "__main__":
 
