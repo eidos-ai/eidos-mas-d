@@ -8,11 +8,11 @@ setup(name='former',
       author_email='former@peterbloem.nl',
       license='MIT',
       packages=['former'],
-      install_requires=[
-            'torch',
-            'tqdm',
-            'numpy',
-            'torchtext',
-            'tensorboard'
-      ],
+#      install_requires=[
+#            'torch',
+#            'tqdm',
+#            'numpy',
+#            'torchtext',
+#            'tensorboard'
+#],
       zip_safe=False)
