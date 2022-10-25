@@ -1,0 +1,9 @@
+[submodule "NeRF/instant-ngp"]
+	path = NeRF/instant-ngp
+	url = https://github.com/NVlabs/instant-ngp
+[submodule "NeRF/ceres-solver"]
+	path = NeRF/ceres-solver
+	url = https://github.com/ceres-solver/ceres-solver
+[submodule "NeRF/colmap"]
+	path = NeRF/colmap
+	url = https://github.com/colmap/colmap
