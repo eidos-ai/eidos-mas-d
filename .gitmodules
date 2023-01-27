@@ -7,3 +7,6 @@
 [submodule "NeRF/colmap"]
 	path = NeRF/colmap
 	url = https://github.com/colmap/colmap
+[submodule "SMPL_HybrIK_Quaternions/HybrIK"]
+	path = SMPL_HybrIK_Quaternions/HybrIK
+	url = https://github.com/Jeff-sjtu/HybrIK
