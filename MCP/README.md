@@ -110,3 +110,55 @@ npx @modelcontextprotocol/inspector uv run python find_server/find_server.py
 ├── README.md
 └── uv.lock
 ```
+
+## Claude Desktop Configuration
+
+This project includes a `claude_desktop_config.json` file, which is used by Claude Desktop to automatically discover and run the MCP servers.
+
+Here is the configuration used in this project:
+
+```json
+{
+    "mcpServers": {
+        "research": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/research_server/",
+                "run",
+                "search_papers_mcp_server.py"
+            ]
+        },
+        "find": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/find_server/",
+                "run",
+                "find_server.py"
+            ]
+        },
+        "fetch": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-fetch"
+            ]
+        },
+        "pizzas": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/pizza_ordering_server/",
+                "run",
+                "pizza_ordering_server.py"
+            ]
+        }
+    }
+}
+```
+
+This file defines the commands needed to start each MCP server. Claude Desktop uses this file to launch the servers in the background so you can interact with them.
+
+These commands run the server scripts using the Python environment from the specified directory. That directory must contain a .venv or a pyproject.toml managed by uv.
+
+**Note:** The paths in `args` are absolute and need to be updated to match the location of the project on your machine.
