@@ -1,8 +1,12 @@
 import os
 import csv
 from pathlib import Path
+from dotenv import load_dotenv
 
 from mcp.server.fastmcp import FastMCP
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize the MCP server
 mcp = FastMCP()
@@ -87,6 +91,16 @@ def get_pizza_history() -> str:
     
     return full_history_content + best_orders_content
 
+@mcp.tool("pizza-history-analysis")
+def pizza_history_for_analysis() -> str:
+    """
+    Returns the pizza order history with a prompt for general analysis.
+    """
+    pizza_history = get_pizza_history()
+    return f"""{pizza_history}
+
+The data above contains historical pizza orders. This data can be used to analyze ordering habits and make informed decisions for future orders."""
+
 @mcp.prompt()
 def generate_ordering_prompt(pizzeria: str, num_people: int) -> str:
     """
@@ -97,25 +111,15 @@ def generate_ordering_prompt(pizzeria: str, num_people: int) -> str:
         pizzeria: The name of the pizzeria to order from.
         num_people: The number of people to order for.
     """
-    best_orders, _ = _load_pizza_data()
+    pizza_history = get_pizza_history()
 
-    if not best_orders:
-        return "Sorry, I could not load any pizza order history."
-        
-    if pizzeria not in best_orders:
-        return f"Sorry, I do not have any historical order data for '{pizzeria}'."
+    return f"""Here is the full history of instances ordering pizza from different pizzerias for a varying number of people:
+{pizza_history}
 
-    best_order = best_orders[pizzeria]
-
-    return f"""
-Here is the single best-performing past order for '{pizzeria}':
-- Pizzas Ordered: {best_order['pizzas']}
-- People Fed: {best_order['people']}
-
-Based *only* on this historical data, determine the optimal number of pizzas to order for {num_people} people to minimize waste.
+Based *only* on this historical data, determine the optimal number of pizzas to order for {num_people} people from {pizzeria} to minimize waste.
 
 Follow these steps for your calculation:
-1. From the historical data provided above, calculate a 'pizzas per person' ratio by dividing 'Pizzas Ordered' by 'People Fed'.
+1. From the historical data from all pizzerias provided above, calculate a 'pizzas per person' for {pizzeria} ratio by dividing 'Pizzas Ordered' by 'People Fed'.
 2. Use that ratio to estimate the number of pizzas for {num_people} people.
 3. Round the result up to the nearest whole number to ensure there is enough food.
 

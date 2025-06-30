@@ -21,24 +21,16 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installation
 
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/eidos-project/eidos-mcp-servers.git
-    cd eidos-mcp-servers
-    ```
-
-2.  **Create a virtual environment and install dependencies:**
+1.  **Create a virtual environment and install dependencies:**
     This project uses `uv` for package management.
     ```sh
-    uv venv
-    source .venv/bin/activate
     uv sync
     ```
-    This will install all the dependencies listed in `pyproject.toml`.
+    This will install all the dependencies listed in `pyproject.toml` into a `.venv` directory.
 
 ### Configuration
 
-1.  Create a `.env` file in the root of the project.
+1.  Create a `.env` file in the root of this project.
 2.  Add a `DATA_DIR` variable to specify where to store required information for the `research_server` and `pizza_ordering_server`:
     ```
     DATA_DIR=./data

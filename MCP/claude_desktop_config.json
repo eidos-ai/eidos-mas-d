@@ -4,7 +4,7 @@
             "command": "uv",
             "args": [
                 "--directory",
-                "/Users/enzo/Documents/eidos_mcp_servers/research_server/",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/research_server/",
                 "run", "search_papers_mcp_server.py"
             ]
         },
@@ -13,7 +13,7 @@
             "command": "uv",
             "args": [
                 "--directory",
-                "/Users/enzo/Documents/eidos_mcp_servers/find_server/",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/find_server/",
                 "run", "find_server.py"
             ]
         },
@@ -26,7 +26,7 @@
             "command": "uv",
             "args": [
                 "--directory",
-                "/Users/enzo/Documents/eidos_mcp_servers/pizza_ordering_server/",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/pizza_ordering_server/",
                 "run", "pizza_ordering_server.py"
             ]
         }
