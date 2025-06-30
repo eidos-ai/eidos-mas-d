@@ -1,0 +1,27 @@
+{
+    "mcpServers": {
+        
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/Users/enzo/Documents/"
+            ]
+        },
+        
+        "research": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos-mcp-servers/src",
+                "run", "search_papers_mcp_server.py"
+            ]
+        },
+        
+        "fetch": {
+            "command": "uvx",
+            "args": ["mcp-server-fetch"]
+        }
+    }
+}

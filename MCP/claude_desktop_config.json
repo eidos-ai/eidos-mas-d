@@ -1,0 +1,34 @@
+{
+    "mcpServers": { 
+        "research": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos_mcp_servers/research_server/",
+                "run", "search_papers_mcp_server.py"
+            ]
+        },
+
+        "find": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos_mcp_servers/find_server/",
+                "run", "find_server.py"
+            ]
+        },
+        "fetch": {
+            "command": "uvx",
+            "args": ["mcp-server-fetch"]
+        },
+
+        "pizzas": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/Users/enzo/Documents/eidos_mcp_servers/pizza_ordering_server/",
+                "run", "pizza_ordering_server.py"
+            ]
+        }
+    }
+}

@@ -1,0 +1,15 @@
+[project]
+name = "eidos-mcp-servers"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.55.0",
+    "arxiv>=2.2.0",
+    "asyncio>=3.4.3",
+    "dotenv>=0.9.9",
+    "mcp>=1.10.0",
+    "nest-asyncio>=1.6.0",
+    "pathlib>=1.0.1",
+]
