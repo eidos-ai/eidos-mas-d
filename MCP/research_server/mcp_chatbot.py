@@ -6,8 +6,11 @@ from typing import List, Dict, TypedDict
 from contextlib import AsyncExitStack
 import json
 import asyncio
+import os
 
 load_dotenv()
+
+SERVER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "server_config.json")
 
 class ToolDefinition(TypedDict):
     name: str
@@ -57,7 +60,7 @@ class MCP_ChatBot:
     async def connect_to_servers(self): # new
         """Connect to all configured MCP servers."""
         try:
-            with open("server_config.json", "r") as file:
+            with open(SERVER_CONFIG_PATH, "r") as file:
                 data = json.load(file)
             
             servers = data.get("mcpServers", {})
@@ -145,7 +148,7 @@ async def main():
         # the mcp clients and sessions are not initialized using "with"
         # like in the previous lesson
         # so the cleanup should be manually handled
-        await chatbot.connect_to_servers() # new! 
+        await chatbot.connect_to_servers()
         await chatbot.chat_loop()
     finally:
         await chatbot.cleanup() #new! 

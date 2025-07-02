@@ -14,7 +14,7 @@
             "command": "uv",
             "args": [
                 "--directory",
-                "/Users/enzo/Documents/eidos-mcp-servers/src",
+                "/Users/enzo/Documents/eidos-mas-d/MCP/research_server/",
                 "run", "search_papers_mcp_server.py"
             ]
         },
