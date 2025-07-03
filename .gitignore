@@ -1,2 +1,5 @@
 stable_diffusion/.ipynb_checkpoints/
 WhatTheKafka/env/
+
+#DS_Store
+*.DS_Store
